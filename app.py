@@ -1,4 +1,3 @@
-
 import time
 import streamlit as st
 
@@ -93,20 +92,35 @@ st.markdown(
         min-height: 2.7rem;
         font-weight: 600 !important;
         color: #111111 !important;
-        transition: transform 0.12s ease, filter 0.12s ease;
+        background: #ffffff !important;
+        transition: transform 0.12s ease, filter 0.12s ease, background-color 0.12s ease, color 0.12s ease;
     }
 
     .stButton > button:hover {
         transform: translateY(-1px);
-        filter: brightness(1.03);
+        background: #ff3d48 !important;
+        color: #ffffff !important;
+        filter: none !important;
     }
 
     .delete-button .stButton > button {
+        background: #ffffff !important;
+        color: #111111 !important;
+    }
+
+    .delete-button .stButton > button:hover {
         background: #ff3d48 !important;
+        color: #ffffff !important;
     }
 
     .continue-button .stButton > button {
-        background: #16d45b !important;
+        background: #ffffff !important;
+        color: #111111 !important;
+    }
+
+    .continue-button .stButton > button:hover {
+        background: #ff3d48 !important;
+        color: #ffffff !important;
     }
 
     .result-circle {
@@ -430,14 +444,11 @@ elif st.session_state.page == 3:
         first = st.session_state.values_page_1
         second = st.session_state.values_page_2
 
-        # Винаги делим по-малкото число на по-голямото.
-        # Така резултатът за всяка двойка е между 0% и 100%.
         pair_percentages = [
             (min(a, b) / max(a, b)) * 100
             for a, b in zip(first, second)
         ]
 
-        # Средноаритметична стойност на шестте процента.
         st.session_state.result = (
             sum(pair_percentages) / len(pair_percentages)
         )
@@ -508,4 +519,3 @@ elif st.session_state.page == 3:
             st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
-
