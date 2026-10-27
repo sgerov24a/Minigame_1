@@ -11,6 +11,9 @@ st.set_page_config(
 
 FIELDS = 6
 
+# Интервал на всяко поле: полета 1–3 са от 2 до 6, полета 4–6 са от 1 до 10
+FIELD_RANGES = [(2, 6)] * 3 + [(1, 10)] * 3
+
 # Цветове: фон на страницата и цвят на панела
 THEMES = {
     1: {"title": "Страница 1", "bg": "#7bd3f5", "panel": "#05a9e8"},
@@ -179,7 +182,7 @@ def render_input_page(page_number):
         for col, indices in ((left, (0, 1, 2)), (right, (3, 4, 5))):
             with col:
                 for i in indices:
-                    lo, hi = (2, 6) if i < 3 else (1, 10)
+                    lo, hi = FIELD_RANGES[i]
                     label = f"Поле {i + 1} ({lo}–{hi})"
 
                     st.markdown(f'<div class="field-label">{label}</div>', unsafe_allow_html=True)
@@ -233,11 +236,20 @@ def result_style_and_message(percent):
     return "#087d35", "Сходството е много високо. Двете групи числа са почти напълно сходни."
 
 
+def pair_similarity(a, b, lo, hi):
+    # Разстоянието между двете числа се мери спрямо целия интервал на полето:
+    #   еднакви числа            -> 100%
+    #   двете противоположни     -> 0%  (напр. 2 и 6 при 2–6, или 1 и 10 при 1–10)
+    return (1 - abs(a - b) / (hi - lo)) * 100
+
+
 def compute_similarity(first, second):
-    # За всяка двойка делим по-малкото число на по-голямото (0–100%),
-    # после взимаме средното на шестте процента.
-    pairs = [(min(a, b) / max(a, b)) * 100 for a, b in zip(first, second) if a and b]
-    return sum(pairs) / len(pairs) if pairs else 0.0
+    # Сравняваме поле с поле (1-во с 1-во, 2-ро с 2-ро ...) и взимаме средното.
+    pairs = [
+        pair_similarity(a, b, lo, hi)
+        for a, b, (lo, hi) in zip(first, second, FIELD_RANGES)
+    ]
+    return sum(pairs) / len(pairs)
 
 
 # ---------- РОУТЕР ----------
