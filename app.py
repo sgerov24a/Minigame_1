@@ -44,14 +44,14 @@ st.markdown(
         font-size: 1.65rem;
         font-weight: 700;
         text-align: center;
-        margin-bottom: 1.2rem;
+        margin-bottom: 1.4rem;
         color: #111111;
     }
 
     .panel {
         max-width: 820px;
         margin: 0 auto;
-        padding: 2.2rem 2.6rem 2.2rem;
+        padding: 2.5rem 3rem;
         border: 4px solid #050505;
         border-radius: 34px;
         background: var(--panel-bg, #05a9e8);
@@ -62,7 +62,7 @@ st.markdown(
     .field-label {
         font-size: 1rem;
         font-weight: 600;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.4rem;
         color: #111111;
     }
 
@@ -87,20 +87,20 @@ st.markdown(
         background: transparent !important;
     }
 
+    /* Общи стилове за бутони с фиксирана заобленост 18px */
     .stButton > button {
         border: 3px solid #050505 !important;
         border-radius: 18px !important;
-        min-height: 2.7rem;
+        min-height: 2.8rem;
         font-weight: 600 !important;
-        transition: transform 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+        transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
     }
 
     .stButton > button:hover {
         transform: translateY(-1px);
-        background: #ff3d48 !important;
-        color: #ffffff !important;
     }
 
+    /* Бутон Изтрий: Бял по подразбиране, червен при ховър */
     .delete-button .stButton > button {
         background: #ffffff !important;
         color: #111111 !important;
@@ -111,6 +111,7 @@ st.markdown(
         color: #ffffff !important;
     }
 
+    /* Бутон Продължи / Ново изчисление: Зелен по подразбиране, червен при ховър */
     .continue-button .stButton > button {
         background: #16d45b !important;
         color: #111111 !important;
@@ -139,10 +140,10 @@ st.markdown(
 
     .result-message {
         max-width: 720px;
-        margin: 0 auto;
+        margin: 0 auto 1.5rem auto;
         text-align: center;
-        color: #222222;
-        font-size: 1.12rem;
+        color: #111111;
+        font-size: 1.15rem;
         font-weight: 500;
         line-height: 1.6;
     }
@@ -218,7 +219,7 @@ def read_current_values(page_number):
     ]
 
 
-# ---------- СТРАНИЦИ 1 И 2 (ВСИЧКО В ПАНЕЛА) ----------
+# ---------- СТРАНИЦИ 1 И 2 ----------
 def render_input_page(page_number, background, panel_color, title):
 
     st.markdown(
@@ -234,7 +235,6 @@ def render_input_page(page_number, background, panel_color, title):
     )
 
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-
     st.markdown(f'<div class="page-title">{title}</div>', unsafe_allow_html=True)
 
     left, right = st.columns(2, gap="large")
@@ -371,7 +371,7 @@ elif st.session_state.page == 3:
     st.markdown(
         """
         <style>
-        .stApp { --page-bg: #c8c8c8; }
+        .stApp { --page-bg: #c8c8c8; --panel-bg: #34495e; }
         </style>
         """,
         unsafe_allow_html=True,
@@ -380,7 +380,7 @@ elif st.session_state.page == 3:
     result = st.session_state.result
     ring_color, message = result_style_and_message(result)
 
-    # Всичко на страница 3 (кръг, съобщение и бутон) е събрано вътре в панела
+    # Всичко на страница 3 (заглавие, кръг, съобщение и бутон) е събрано вътре в панела
     st.markdown(
         f"""
         <div class="panel" style="background: #34495e; color: #ffffff;">
@@ -393,14 +393,12 @@ elif st.session_state.page == 3:
             <div class="result-message" style="color: #ecf0f1;">
                 {message}
             </div>
-        </div>
         """,
         unsafe_allow_html=True,
     )
 
     st.write("")
 
-    # Бутон за ново изчисление
     _, center_col, _ = st.columns([1.5, 2, 1.5])
     with center_col:
         st.markdown('<div class="continue-button">', unsafe_allow_html=True)
@@ -416,3 +414,5 @@ elif st.session_state.page == 3:
             st.session_state.result = None
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
