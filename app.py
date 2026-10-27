@@ -1,511 +1,295 @@
-
 import time
+
 import streamlit as st
 
 st.set_page_config(
     page_title="Сравнение на числа",
-    page_icon="◉",
-    layout="wide",
+    page_icon="🔵",
+    layout="centered",
     initial_sidebar_state="collapsed",
 )
 
-# ---------- ДИЗАЙН ----------
+FIELDS = 6
+PAGE_THEMES = {
+    1: {"bg": "#dbeeff", "panel": "#ffffff", "accent": "#1d6fe8", "title": "Първа група числа"},
+    2: {"bg": "#d3e4fb", "panel": "#ffffff", "accent": "#0b4fb3", "title": "Втора група числа"},
+}
+
+# ---------- ОБЩ ДИЗАЙН ----------
 st.markdown(
     """
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-    html, body, [class*="css"],
-    [data-testid="stAppViewContainer"] {
-        font-family: 'Inter', sans-serif;
-    }
+    html, body, .stApp, .stApp * { font-family: 'Inter', sans-serif; }
 
-    #MainMenu, footer, header {
-        visibility: hidden;
-    }
+    #MainMenu, footer, header { visibility: hidden; }
+    [data-testid="stSidebar"], [data-testid="collapsedControl"] { display: none; }
 
-    [data-testid="collapsedControl"] {
-        display: none;
-    }
+    .stApp { background: var(--page-bg, #dbeeff); }
 
-    .stApp {
-        background: var(--page-bg, #7bd3f5);
-    }
-
-    [data-testid="stAppViewContainer"] > .main {
-        padding-top: 2.2rem;
-        padding-bottom: 2rem;
-    }
-
-    [data-testid="stAppViewContainer"] > .main .block-container {
-        max-width: 1180px;
-    }
+    .block-container { max-width: 760px; padding-top: 2.5rem; padding-bottom: 2rem; }
 
     .page-title {
-        font-size: 1.65rem;
-        font-weight: 700;
-        text-align: center;
-        margin-bottom: 1.4rem;
-        color: #111111;
+        font-size: 1.7rem; font-weight: 700; text-align: center;
+        color: #0b2a5b; margin-bottom: 0.2rem;
+    }
+    .page-subtitle {
+        text-align: center; color: #3b5b8c; margin-bottom: 1.4rem; font-size: 0.98rem;
     }
 
-    .panel {
-        max-width: 820px;
-        margin: 0 auto;
-        padding: 2.2rem 2.6rem 2rem;
-        border: 4px solid #050505;
-        border-radius: 34px;
-        background: var(--panel-bg, #05a9e8);
-        color: #111111;
-        box-sizing: border-box;
+    /* Панел (контейнер с ключ "panel") */
+    .st-key-panel {
+        background: var(--panel-bg, #ffffff);
+        border: 2px solid #1d6fe8;
+        border-radius: 24px;
+        padding: 1.8rem 2rem 1.4rem;
+        box-shadow: 0 10px 30px rgba(29, 111, 232, 0.15);
     }
 
     .field-label {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 0.35rem;
-        color: #111111;
+        font-size: 0.95rem; font-weight: 600; color: #0b2a5b; margin-bottom: 0.2rem;
     }
 
     div[data-testid="stNumberInput"] input {
-        background: #ffffff !important;
-        color: #111111 !important;
-        border: 3px solid #050505 !important;
-        border-radius: 18px !important;
-        min-height: 2.8rem;
-        font-size: 1.15rem !important;
+        background: #f4f9ff !important;
+        color: #0b2a5b !important;
+        border-radius: 12px !important;
         text-align: center;
-        box-shadow: none !important;
+        font-size: 1.1rem !important;
     }
-
-    div[data-testid="stNumberInput"] button {
-        display: none !important;
-    }
-
-    div[data-testid="stNumberInput"] > div {
-        border: none !important;
-        background: transparent !important;
-    }
+    div[data-testid="stNumberInput"] button { display: none !important; }
 
     .stButton > button {
-        border: 3px solid #050505 !important;
-        border-radius: 18px !important;
+        border-radius: 14px !important;
         min-height: 2.7rem;
         font-weight: 600 !important;
-        color: #111111 !important;
+        border: 2px solid #1d6fe8 !important;
         transition: transform 0.12s ease, filter 0.12s ease;
     }
+    .stButton > button:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
 
-    .stButton > button:hover {
-        transform: translateY(-1px);
-        filter: brightness(1.03);
+    /* Бутон „Изтрий" */
+    [class*="st-key-clear_"] button {
+        background: #ffffff !important; color: #d62839 !important; border-color: #d62839 !important;
     }
-
-    .delete-button .stButton > button {
-        background: #ff3d48 !important;
+    /* Бутони „Продължи" / „Ново изчисление" */
+    [class*="st-key-continue_"] button, .st-key-restart button {
+        background: #1d6fe8 !important; color: #ffffff !important;
     }
-
-    .continue-button .stButton > button {
-        background: #16d45b !important;
+    [class*="st-key-continue_"] button:disabled {
+        background: #a9c8f5 !important; border-color: #a9c8f5 !important; color: #ffffff !important;
     }
 
     .result-circle {
-        width: 220px;
-        height: 220px;
-        margin: 1.4rem auto 1.6rem;
-        border: 7px solid #050505;
-        border-radius: 50%;
-        background: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: inset 0 0 0 7px var(--result-color, #16d45b);
-        font-size: 2.55rem;
-        font-weight: 500;
-        color: #111111;
+        width: 230px; height: 230px; margin: 1.5rem auto 1.6rem;
+        border-radius: 50%; background: #ffffff;
+        border: 12px solid var(--result-color, #1d6fe8);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.6rem; font-weight: 700; color: #0b2a5b;
+        box-shadow: 0 10px 30px rgba(11, 42, 91, 0.18);
     }
-
     .result-message {
-        max-width: 720px;
-        margin: 0 auto;
-        text-align: center;
-        color: #222222;
-        font-size: 1.12rem;
-        font-weight: 500;
-        line-height: 1.6;
+        max-width: 560px; margin: 0 auto; text-align: center;
+        color: #0b2a5b; font-size: 1.1rem; font-weight: 500; line-height: 1.6;
     }
 
     .loading-wrap {
-        min-height: 55vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 1.2rem;
+        min-height: 55vh; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; gap: 1.2rem;
     }
-
     .loading-spinner {
-        width: 78px;
-        height: 78px;
-        border: 9px solid #ffffff;
-        border-top: 9px solid #111111;
-        border-right: 9px solid #16d45b;
-        border-radius: 50%;
+        width: 76px; height: 76px; border: 8px solid #ffffff;
+        border-top-color: #1d6fe8; border-radius: 50%;
         animation: spin 0.9s linear infinite;
     }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-        100% {
-            transform: rotate(360deg);
-        }
-    }
-
-    .loading-text {
-        font-size: 1.15rem;
-        font-weight: 600;
-        color: #111111;
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 1.15rem; font-weight: 600; color: #0b2a5b; }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 
-# ---------- СЪСТОЯНИЕ НА САЙТА ----------
-if "page" not in st.session_state:
+def set_theme(page_bg, panel_bg="#ffffff"):
+    st.markdown(
+        f"<style>.stApp {{ --page-bg: {page_bg}; --panel-bg: {panel_bg}; }}</style>",
+        unsafe_allow_html=True,
+    )
+
+
+# ---------- СЪСТОЯНИЕ ----------
+defaults = {
+    "page": 1,
+    "values_page_1": [None] * FIELDS,
+    "values_page_2": [None] * FIELDS,
+    "loading_started": False,
+    "result": None,
+}
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+
+
+def field_key(page_number, i):
+    return f"p{page_number}_field_{i}"
+
+
+def read_values(page_number):
+    return [st.session_state.get(field_key(page_number, i)) for i in range(FIELDS)]
+
+
+# ---------- CALLBACK-ове (безопасно променят състоянието преди ново рисуване) ----------
+def clear_page(page_number):
+    for i in range(FIELDS):
+        st.session_state[field_key(page_number, i)] = None
+
+
+def go_next(page_number):
+    values = read_values(page_number)
+    if any(v is None for v in values):
+        return
+    st.session_state[f"values_page_{page_number}"] = values
+    if page_number == 1:
+        st.session_state.page = 2
+    else:
+        st.session_state.page = 3
+        st.session_state.loading_started = False
+        st.session_state.result = None
+
+
+def restart():
+    for page_number in (1, 2):
+        for i in range(FIELDS):
+            st.session_state.pop(field_key(page_number, i), None)
     st.session_state.page = 1
-
-if "values_page_1" not in st.session_state:
-    st.session_state.values_page_1 = [None] * 6
-
-if "values_page_2" not in st.session_state:
-    st.session_state.values_page_2 = [None] * 6
-
-if "loading_started" not in st.session_state:
+    st.session_state.values_page_1 = [None] * FIELDS
+    st.session_state.values_page_2 = [None] * FIELDS
     st.session_state.loading_started = False
-
-if "result" not in st.session_state:
     st.session_state.result = None
 
 
-# ---------- ИЗТРИВАНЕ НА ПОЛЕТАТА ----------
-def clear_current_page(page_number):
-    for i in range(6):
-        st.session_state[f"p{page_number}_field_{i}"] = None
-
-    if page_number == 1:
-        st.session_state.values_page_1 = [None] * 6
-    else:
-        st.session_state.values_page_2 = [None] * 6
-
-
-# ---------- ПРОЧИТАНЕ НА ВЪВЕДЕНИТЕ ЧИСЛА ----------
-def read_current_values(page_number):
-    return [
-        st.session_state.get(f"p{page_number}_field_{i}")
-        for i in range(6)
-    ]
-
-
 # ---------- СТРАНИЦИ 1 И 2 ----------
-def render_input_page(page_number, background, panel_color, title):
+def render_input_page(page_number):
+    theme = PAGE_THEMES[page_number]
+    set_theme(theme["bg"], theme["panel"])
 
+    st.markdown(f'<div class="page-title">{theme["title"]}</div>', unsafe_allow_html=True)
     st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            --page-bg: {background};
-            --panel-bg: {panel_color};
-        }}
-        </style>
-        """,
+        f'<div class="page-subtitle">Стъпка {page_number} от 2 · попълни всички полета</div>',
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        '<div class="panel">',
-        unsafe_allow_html=True,
-    )
+    with st.container(key="panel"):
+        left, right = st.columns(2, gap="large")
+        for col, indices in ((left, (0, 1, 2)), (right, (3, 4, 5))):
+            with col:
+                for i in indices:
+                    if i < 3:
+                        label, lo, hi = f"Поле {i + 1} (2–6)", 2, 6
+                        placeholder = "Число от 2 до 6"
+                    else:
+                        label, lo, hi = f"Поле {i + 1} (1–10)", 1, 10
+                        placeholder = "Число от 1 до 10"
 
-    st.markdown(
-        f'<div class="page-title">{title}</div>',
-        unsafe_allow_html=True,
-    )
+                    st.markdown(f'<div class="field-label">{label}</div>', unsafe_allow_html=True)
+                    st.number_input(
+                        label,
+                        min_value=lo,
+                        max_value=hi,
+                        value=None,
+                        step=1,
+                        key=field_key(page_number, i),
+                        label_visibility="collapsed",
+                        placeholder=placeholder,
+                    )
 
-    left, right = st.columns(2, gap="large")
-
-    for col, indices in (
-        (left, (0, 1, 2)),
-        (right, (3, 4, 5)),
-    ):
-        with col:
-
-            for i in indices:
-
-                field_number = i + 1
-
-                if i < 3:
-                    label = f"Поле {field_number} (2–6)"
-                    min_value = 2
-                    max_value = 6
-                    placeholder = "Число от 2 до 6"
-                else:
-                    label = f"Поле {field_number} (1–10)"
-                    min_value = 1
-                    max_value = 10
-                    placeholder = "Число от 1 до 10"
-
-                st.markdown(
-                    f'<div class="field-label">{label}</div>',
-                    unsafe_allow_html=True,
-                )
-
-                st.number_input(
-                    label,
-                    min_value=min_value,
-                    max_value=max_value,
-                    value=None,
-                    step=1,
-                    key=f"p{page_number}_field_{i}",
-                    label_visibility="collapsed",
-                    placeholder=placeholder,
-                )
-
-    values = read_current_values(page_number)
-
-    all_filled = all(
-        value is not None
-        for value in values
-    )
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    all_filled = all(v is not None for v in read_values(page_number))
 
     st.write("")
-
-    delete_col, spacer_col, continue_col = st.columns(
-        [1.2, 2.5, 1.4]
-    )
-
+    delete_col, _, continue_col = st.columns([1.2, 2.2, 1.4])
     with delete_col:
-
-        st.markdown(
-            '<div class="delete-button">',
-            unsafe_allow_html=True,
-        )
-
-        if st.button(
+        st.button(
             "Изтрий",
             key=f"clear_{page_number}",
             use_container_width=True,
-        ):
-            clear_current_page(page_number)
-            st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with continue_col:
-
-        st.markdown(
-            '<div class="continue-button">',
-            unsafe_allow_html=True,
+            on_click=clear_page,
+            args=(page_number,),
         )
-
-        if st.button(
+    with continue_col:
+        st.button(
             "Продължи",
             key=f"continue_{page_number}",
             use_container_width=True,
             disabled=not all_filled,
-        ):
-
-            if page_number == 1:
-                st.session_state.values_page_1 = values
-                st.session_state.page = 2
-
-            else:
-                st.session_state.values_page_2 = values
-                st.session_state.page = 3
-                st.session_state.loading_started = False
-                st.session_state.result = None
-
-            st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
+            on_click=go_next,
+            args=(page_number,),
+        )
 
     if not all_filled:
-        st.caption(
-            "Попълни всички 6 полета, за да продължиш."
-        )
+        st.caption("Попълни всички 6 полета, за да продължиш.")
 
 
-# ---------- ЦВЯТ И СЪОБЩЕНИЕ СПОРЕД РЕЗУЛТАТА ----------
+# ---------- РЕЗУЛТАТ ----------
 def result_style_and_message(percent):
-
     if percent < 20:
-        return (
-            "#ef3038",
-            "Сходството е много ниско. "
-            "Двете групи числа се различават значително."
-        )
-
+        return "#e5383b", "Сходството е много ниско. Двете групи числа се различават значително."
     if percent < 40:
-        return (
-            "#ff8c24",
-            "Сходството е ниско. "
-            "Има известна прилика, но разликите са големи."
-        )
-
+        return "#f77f00", "Сходството е ниско. Има известна прилика, но разликите са големи."
     if percent < 60:
-        return (
-            "#f2d629",
-            "Сходството е умерено. "
-            "Двете групи числа имат частична прилика."
-        )
-
+        return "#e9c716", "Сходството е умерено. Двете групи числа имат частична прилика."
     if percent < 80:
-        return (
-            "#8bdc65",
-            "Сходството е високо. "
-            "Двете групи числа са сравнително близки."
-        )
-
-    return (
-        "#087d35",
-        "Сходството е много високо. "
-        "Двете групи числа са почти напълно сходни."
-    )
+        return "#5fbf5a", "Сходството е високо. Двете групи числа са сравнително близки."
+    return "#1b8a3e", "Сходството е много високо. Двете групи числа са почти напълно сходни."
 
 
-# ---------- СТРАНИЦА 1 ----------
-if st.session_state.page == 1:
-
-    render_input_page(
-        page_number=1,
-        background="#7bd3f5",
-        panel_color="#05a9e8",
-        title="Страница 1",
-    )
+def compute_similarity(first, second):
+    # По-малкото число се дели на по-голямото -> 0..100% за всяка двойка.
+    pairs = [(min(a, b) / max(a, b)) * 100 for a, b in zip(first, second) if a and b]
+    return sum(pairs) / len(pairs) if pairs else 0.0
 
 
-# ---------- СТРАНИЦА 2 ----------
-elif st.session_state.page == 2:
+# ---------- РОУТЕР ----------
+page = st.session_state.page
 
-    render_input_page(
-        page_number=2,
-        background="#f8c9df",
-        panel_color="#f2a5ca",
-        title="Страница 2",
-    )
+if page in (1, 2):
+    render_input_page(page)
 
-
-# ---------- СТРАНИЦА 3 ----------
-elif st.session_state.page == 3:
+else:
+    set_theme("#e8edf3")
 
     if not st.session_state.loading_started:
-
-        st.session_state.loading_started = True
-
-        st.markdown(
+        placeholder = st.empty()
+        placeholder.markdown(
             """
-            <style>
-            .stApp {
-                --page-bg: #c8c8c8;
-            }
-            </style>
-
             <div class="loading-wrap">
                 <div class="loading-spinner"></div>
-                <div class="loading-text">
-                    Изчисляване на сходството...
-                </div>
+                <div class="loading-text">Изчисляване на сходството...</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-
         time.sleep(5)
-
-        first = st.session_state.values_page_1
-        second = st.session_state.values_page_2
-
-        # Винаги делим по-малкото число на по-голямото.
-        # Така резултатът за всяка двойка е между 0% и 100%.
-        pair_percentages = [
-            (min(a, b) / max(a, b)) * 100
-            for a, b in zip(first, second)
-        ]
-
-        # Средноаритметична стойност на шестте процента.
-        st.session_state.result = (
-            sum(pair_percentages) / len(pair_percentages)
+        st.session_state.result = compute_similarity(
+            st.session_state.values_page_1,
+            st.session_state.values_page_2,
         )
-
+        st.session_state.loading_started = True
+        placeholder.empty()
         st.rerun()
 
-    st.markdown(
-        """
-        <style>
-        .stApp {
-            --page-bg: #c8c8c8;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
     result = st.session_state.result
-
     ring_color, message = result_style_and_message(result)
 
     st.markdown(
         f"""
-        <div
-            class="result-circle"
-            style="--result-color: {ring_color};"
-        >
-            {result:.1f}%
-        </div>
-
-        <div class="result-message">
-            {message}
-        </div>
+        <div class="result-circle" style="--result-color: {ring_color};">{result:.1f}%</div>
+        <div class="result-message">{message}</div>
         """,
         unsafe_allow_html=True,
     )
 
     st.write("")
-
-    _, _, restart_col = st.columns([3, 1, 1.5])
-
-    with restart_col:
-
-        st.markdown(
-            '<div class="continue-button">',
-            unsafe_allow_html=True,
-        )
-
-        if st.button(
-            "Ново изчисление",
-            key="restart",
-            use_container_width=True,
-        ):
-
-            for page_number in (1, 2):
-                for i in range(6):
-                    st.session_state.pop(
-                        f"p{page_number}_field_{i}",
-                        None,
-                    )
-
-            st.session_state.page = 1
-            st.session_state.values_page_1 = [None] * 6
-            st.session_state.values_page_2 = [None] * 6
-            st.session_state.loading_started = False
-            st.session_state.result = None
-
-            st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
+    _, mid, _ = st.columns([1, 1.4, 1])
+    with mid:
+        st.button("Ново изчисление", key="restart", use_container_width=True, on_click=restart)
