@@ -32,26 +32,26 @@ st.markdown(
     }
 
     [data-testid="stAppViewContainer"] > .main {
-        padding-top: 2.2rem;
+        padding-top: 2rem;
         padding-bottom: 2rem;
     }
 
     [data-testid="stAppViewContainer"] > .main .block-container {
-        max-width: 1180px;
+        max-width: 900px;
     }
 
     .page-title {
         font-size: 1.65rem;
         font-weight: 700;
         text-align: center;
-        margin-bottom: 1.4rem;
+        margin-bottom: 1.2rem;
         color: #111111;
     }
 
     .panel {
         max-width: 820px;
         margin: 0 auto;
-        padding: 2.2rem 2.6rem 2rem;
+        padding: 2.2rem 2.6rem 2.2rem;
         border: 4px solid #050505;
         border-radius: 34px;
         background: var(--panel-bg, #05a9e8);
@@ -75,6 +75,7 @@ st.markdown(
         font-size: 1.15rem !important;
         text-align: center;
         box-shadow: none !important;
+        padding: 0.5rem 1rem !important;
     }
 
     div[data-testid="stNumberInput"] button {
@@ -91,16 +92,13 @@ st.markdown(
         border-radius: 18px !important;
         min-height: 2.7rem;
         font-weight: 600 !important;
-        color: #111111 !important;
-        background: #ffffff !important;
-        transition: transform 0.12s ease, filter 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+        transition: transform 0.12s ease, background-color 0.12s ease, color 0.12s ease;
     }
 
     .stButton > button:hover {
         transform: translateY(-1px);
         background: #ff3d48 !important;
         color: #ffffff !important;
-        filter: none !important;
     }
 
     .delete-button .stButton > button {
@@ -114,7 +112,7 @@ st.markdown(
     }
 
     .continue-button .stButton > button {
-        background: #ffffff !important;
+        background: #16d45b !important;
         color: #111111 !important;
     }
 
@@ -124,9 +122,9 @@ st.markdown(
     }
 
     .result-circle {
-        width: 220px;
-        height: 220px;
-        margin: 1.4rem auto 1.6rem;
+        width: 200px;
+        height: 200px;
+        margin: 1.2rem auto 1.4rem;
         border: 7px solid #050505;
         border-radius: 50%;
         background: #ffffff;
@@ -134,7 +132,7 @@ st.markdown(
         align-items: center;
         justify-content: center;
         box-shadow: inset 0 0 0 7px var(--result-color, #16d45b);
-        font-size: 2.55rem;
+        font-size: 2.4rem;
         font-weight: 500;
         color: #111111;
     }
@@ -169,12 +167,8 @@ st.markdown(
     }
 
     @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-        100% {
-            transform: rotate(360deg);
-        }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 
     .loading-text {
@@ -224,7 +218,7 @@ def read_current_values(page_number):
     ]
 
 
-# ---------- СТРАНИЦИ 1 И 2 ----------
+# ---------- СТРАНИЦИ 1 И 2 (ВСИЧКО В ПАНЕЛА) ----------
 def render_input_page(page_number, background, panel_color, title):
 
     st.markdown(
@@ -239,15 +233,9 @@ def render_input_page(page_number, background, panel_color, title):
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        '<div class="panel">',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
 
-    st.markdown(
-        f'<div class="page-title">{title}</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown(f'<div class="page-title">{title}</div>', unsafe_allow_html=True)
 
     left, right = st.columns(2, gap="large")
 
@@ -256,9 +244,7 @@ def render_input_page(page_number, background, panel_color, title):
         (right, (3, 4, 5)),
     ):
         with col:
-
             for i in indices:
-
                 field_number = i + 1
 
                 if i < 3:
@@ -272,10 +258,7 @@ def render_input_page(page_number, background, panel_color, title):
                     max_value = 10
                     placeholder = "Число от 1 до 10"
 
-                st.markdown(
-                    f'<div class="field-label">{label}</div>',
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f'<div class="field-label">{label}</div>', unsafe_allow_html=True)
 
                 st.number_input(
                     label,
@@ -289,112 +272,55 @@ def render_input_page(page_number, background, panel_color, title):
                 )
 
     values = read_current_values(page_number)
-
-    all_filled = all(
-        value is not None
-        for value in values
-    )
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    all_filled = all(value is not None for value in values)
 
     st.write("")
+    st.write("")
 
-    delete_col, spacer_col, continue_col = st.columns(
-        [1.2, 2.5, 1.4]
-    )
+    delete_col, spacer_col, continue_col = st.columns([1.2, 2.0, 1.4])
 
     with delete_col:
-
-        st.markdown(
-            '<div class="delete-button">',
-            unsafe_allow_html=True,
-        )
-
-        if st.button(
-            "Изтрий",
-            key=f"clear_{page_number}",
-            use_container_width=True,
-        ):
+        st.markdown('<div class="delete-button">', unsafe_allow_html=True)
+        if st.button("Изтрий", key=f"clear_{page_number}", use_container_width=True):
             clear_current_page(page_number)
             st.rerun()
-
         st.markdown("</div>", unsafe_allow_html=True)
 
     with continue_col:
-
-        st.markdown(
-            '<div class="continue-button">',
-            unsafe_allow_html=True,
-        )
-
-        if st.button(
-            "Продължи",
-            key=f"continue_{page_number}",
-            use_container_width=True,
-            disabled=not all_filled,
-        ):
-
+        st.markdown('<div class="continue-button">', unsafe_allow_html=True)
+        if st.button("Продължи", key=f"continue_{page_number}", use_container_width=True, disabled=not all_filled):
             if page_number == 1:
                 st.session_state.values_page_1 = values
                 st.session_state.page = 2
-
             else:
                 st.session_state.values_page_2 = values
                 st.session_state.page = 3
                 st.session_state.loading_started = False
                 st.session_state.result = None
-
             st.rerun()
-
         st.markdown("</div>", unsafe_allow_html=True)
 
     if not all_filled:
-        st.caption(
-            "Попълни всички 6 полета, за да продължиш."
-        )
+        st.caption("Попълни всички 6 полета, за да продължиш.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ---------- ЦВЯТ И СЪОБЩЕНИЕ СПОРЕД РЕЗУЛТАТА ----------
 def result_style_and_message(percent):
-
     if percent < 20:
-        return (
-            "#ef3038",
-            "Сходството е много ниско. "
-            "Двете групи числа се различават значително."
-        )
-
+        return ("#ef3038", "Сходството е много ниско. Двете групи числа се различават значително.")
     if percent < 40:
-        return (
-            "#ff8c24",
-            "Сходството е ниско. "
-            "Има известна прилика, но разликите са големи."
-        )
-
+        return ("#ff8c24", "Сходството е ниско. Има известна прилика, но разликите са големи.")
     if percent < 60:
-        return (
-            "#f2d629",
-            "Сходството е умерено. "
-            "Двете групи числа имат частична прилика."
-        )
-
+        return ("#f2d629", "Сходството е умерено. Двете групи числа имат частична прилика.")
     if percent < 80:
-        return (
-            "#8bdc65",
-            "Сходството е високо. "
-            "Двете групи числа са сравнително близки."
-        )
-
-    return (
-        "#087d35",
-        "Сходството е много високо. "
-        "Двете групи числа са почти напълно сходни."
-    )
+        return ("#8bdc65", "Сходството е високо. Двете групи числа са сравнително близки.")
+    return ("#087d35", "Сходството е много високо. Двете групи числа са почти напълно сходни.")
 
 
 # ---------- СТРАНИЦА 1 ----------
 if st.session_state.page == 1:
-
     render_input_page(
         page_number=1,
         background="#7bd3f5",
@@ -405,7 +331,6 @@ if st.session_state.page == 1:
 
 # ---------- СТРАНИЦА 2 ----------
 elif st.session_state.page == 2:
-
     render_input_page(
         page_number=2,
         background="#f8c9df",
@@ -414,26 +339,21 @@ elif st.session_state.page == 2:
     )
 
 
-# ---------- СТРАНИЦА 3 ----------
+# ---------- СТРАНИЦА 3 (РЕЗУЛТАТ И БУТОН В ПАНЕЛА) ----------
 elif st.session_state.page == 3:
 
     if not st.session_state.loading_started:
-
         st.session_state.loading_started = True
 
         st.markdown(
             """
             <style>
-            .stApp {
-                --page-bg: #c8c8c8;
-            }
+            .stApp { --page-bg: #c8c8c8; }
             </style>
 
             <div class="loading-wrap">
                 <div class="loading-spinner"></div>
-                <div class="loading-text">
-                    Изчисляване на сходството...
-                </div>
+                <div class="loading-text">Изчисляване на сходството...</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -444,43 +364,35 @@ elif st.session_state.page == 3:
         first = st.session_state.values_page_1
         second = st.session_state.values_page_2
 
-        pair_percentages = [
-            (min(a, b) / max(a, b)) * 100
-            for a, b in zip(first, second)
-        ]
-
-        st.session_state.result = (
-            sum(pair_percentages) / len(pair_percentages)
-        )
-
+        pair_percentages = [(min(a, b) / max(a, b)) * 100 for a, b in zip(first, second)]
+        st.session_state.result = sum(pair_percentages) / len(pair_percentages)
         st.rerun()
 
     st.markdown(
         """
         <style>
-        .stApp {
-            --page-bg: #c8c8c8;
-        }
+        .stApp { --page-bg: #c8c8c8; }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
     result = st.session_state.result
-
     ring_color, message = result_style_and_message(result)
 
+    # Всичко на страница 3 (кръг, съобщение и бутон) е събрано вътре в панела
     st.markdown(
         f"""
-        <div
-            class="result-circle"
-            style="--result-color: {ring_color};"
-        >
-            {result:.1f}%
-        </div>
+        <div class="panel" style="background: #34495e; color: #ffffff;">
+            <div class="page-title" style="color: #ffffff;">Резултат от сравнението</div>
+            
+            <div class="result-circle" style="--result-color: {ring_color};">
+                {result:.1f}%
+            </div>
 
-        <div class="result-message">
-            {message}
+            <div class="result-message" style="color: #ecf0f1;">
+                {message}
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -488,34 +400,19 @@ elif st.session_state.page == 3:
 
     st.write("")
 
-    _, _, restart_col = st.columns([3, 1, 1.5])
-
-    with restart_col:
-
-        st.markdown(
-            '<div class="continue-button">',
-            unsafe_allow_html=True,
-        )
-
-        if st.button(
-            "Ново изчисление",
-            key="restart",
-            use_container_width=True,
-        ):
-
+    # Бутон за ново изчисление
+    _, center_col, _ = st.columns([1.5, 2, 1.5])
+    with center_col:
+        st.markdown('<div class="continue-button">', unsafe_allow_html=True)
+        if st.button("Ново изчисление", key="restart", use_container_width=True):
             for page_number in (1, 2):
                 for i in range(6):
-                    st.session_state.pop(
-                        f"p{page_number}_field_{i}",
-                        None,
-                    )
+                    st.session_state.pop(f"p{page_number}_field_{i}", None)
 
             st.session_state.page = 1
             st.session_state.values_page_1 = [None] * 6
             st.session_state.values_page_2 = [None] * 6
             st.session_state.loading_started = False
             st.session_state.result = None
-
             st.rerun()
-
         st.markdown("</div>", unsafe_allow_html=True)
