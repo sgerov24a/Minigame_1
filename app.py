@@ -115,4 +115,398 @@ div[data-testid="stNumberInput"] button {
 
 .stButton > button {
     border: 4px solid #000000 !important;
+    border-radius: 16px !important;
+    min-height: 3rem;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+}
+
+[class*="st-key-clear_"] button {
+    background: #ff4d57 !important;
+}
+
+[class*="st-key-continue_"] button,
+.st-key-restart button {
+    background: #22d760 !important;
+}
+
+[class*="st-key-continue_"] button:disabled {
+    background: #d9d9d9 !important;
+    color: #777777 !important;
+    border-color: #777777 !important;
+}
+
+[data-testid="stCaptionContainer"] {
+    text-align: center;
+    color: #000000 !important;
+}
+
+.loading-wrap {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.loading-spinner {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 10px solid #ffffff;
+    border-top-color: #000000;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #000000;
+}
+
+.result-circle {
+    width: 240px;
+    height: 240px;
+    margin: 1.5rem auto;
+    border: 10px solid #000000;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 14px var(--result-color, #22d760);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #000000;
+}
+
+.result-message {
+    max-width: 520px;
+    margin: 0 auto 1.5rem;
+    text-align: center;
+    color: #000000;
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+    .st-key-panel {
+        padding: 1.6rem 1.3rem 1.4rem;
+        border-width: 8px;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+def set_colors(bg, panel="#05a9e8"):
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            --page-bg: {bg};
+            --panel-bg: {panel};
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ---------- СЪСТОЯНИЕ ----------
+defaults = {
+    "page": 1,
+    "values_page_1": [None] * FIELDS,
+    "values_page_2": [None] * FIELDS,
+    "loading_started": False,
+    "result": None,
+}
+
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+
+
+def field_key(page_number, index):
+    return f"p{page_number}_field_{index}"
+
+
+def read_values(page_number):
+    return [
+        st.session_state.get(field_key(page_number, i))
+        for i in range(FIELDS)
+    ]
+
+
+# ---------- БУТОНИ ----------
+def clear_page(page_number):
+    for i in range(FIELDS):
+        st.session_state[field_key(page_number, i)] = None
+
+
+def go_next(page_number):
+    values = read_values(page_number)
+
+    # Последните три полета са задължителни.
+    if any(value is None for value in values[3:]):
+        return
+
+    st.session_state[f"values_page_{page_number}"] = values
+
+    if page_number == 1:
+        st.session_state.page = 2
+    else:
+        st.session_state.page = 3
+        st.session_state.loading_started = False
+        st.session_state.result = None
+
+
+def restart():
+    for page_number in (1, 2):
+        for i in range(FIELDS):
+            st.session_state.pop(field_key(page_number, i), None)
+
+    st.session_state.page = 1
+    st.session_state.values_page_1 = [None] * FIELDS
+    st.session_state.values_page_2 = [None] * FIELDS
+    st.session_state.loading_started = False
+    st.session_state.result = None
+
+
+# ---------- СТРАНИЦИ 1 И 2 ----------
+def render_input_page(page_number):
+    theme = THEMES[page_number]
+
+    set_colors(theme["bg"], theme["panel"])
+
+    st.markdown(
+        f'<div class="page-title">{theme["title"]}</div>',
+        unsafe_allow_html=True,
+    )
+
+    with st.container(key="panel"):
+        left, right = st.columns(2, gap="large")
+
+        columns_and_indices = [
+            (left, (0, 1, 2)),
+            (right, (3, 4, 5)),
+        ]
+
+        for column, indices in columns_and_indices:
+            with column:
+                for i in indices:
+                    lo, hi = FIELD_RANGES[i]
+                    label = FIELD_NAMES[page_number][i]
+
+                    st.markdown(
+                        f'<div class="field-label">{label}</div>',
+                        unsafe_allow_html=True,
+                    )
+
+                    st.number_input(
+                        label=label,
+                        min_value=lo,
+                        max_value=hi,
+                        value=None,
+                        step=1,
+                        key=field_key(page_number, i),
+                        label_visibility="collapsed",
+                        placeholder=f"Число от {lo} до {hi}",
+                    )
+
+    values = read_values(page_number)
+
+    # Полета 1–3 са незадължителни.
+    # Полета 4–6 трябва да бъдат попълнени.
+    all_filled = all(value is not None for value in values[3:])
+
+    st.write("")
+
+    delete_col, _, continue_col = st.columns([1.2, 2.0, 1.5])
+
+    with delete_col:
+        st.button(
+            "Изтрий",
+            key=f"clear_{page_number}",
+            use_container_width=True,
+            on_click=clear_page,
+            args=(page_number,),
+        )
+
+    with continue_col:
+        st.button(
+            "Продължи",
+            key=f"continue_{page_number}",
+            use_container_width=True,
+            disabled=not all_filled,
+            on_click=go_next,
+            args=(page_number,),
+        )
+
+    if not all_filled:
+        st.caption("Попълни задължителните полета 4, 5 и 6.")
+
+
+# ---------- ИЗЧИСЛЯВАНЕ ----------
+def result_style_and_message(percent):
+    if percent < 20:
+        return (
+            "#ef3038",
+            "Сходството е много ниско. Двете групи числа се различават значително.",
+        )
+
+    if percent < 40:
+        return (
+            "#ff8c24",
+            "Сходството е ниско. Има известна прилика, но разликите са големи.",
+        )
+
+    if percent < 60:
+        return (
+            "#f2d629",
+            "Сходството е умерено. Двете групи числа имат частична прилика.",
+        )
+
+    if percent < 80:
+        return (
+            "#8bdc65",
+            "Сходството е високо. Двете групи числа са сравнително близки.",
+        )
+
+    return (
+        "#087d35",
+        "Сходството е много високо. Двете групи числа са почти напълно сходни.",
+    )
+
+
+def pair_similarity(a, b, lo, hi):
+    # Еднакви числа = 100%.
+    # Разлика, равна на целия интервал = 0%.
+    return (1 - abs(a - b) / (hi - lo)) * 100
+
+
+def compute_similarity(first, second):
+    similarities = []
+
+    # ---------- ПОЛЕТА 1–3 ----------
+    # Изчисляваме средното само от наличните стойности.
+    first_available = [v for v in first[:3] if v is not None]
+    second_available = [v for v in second[:3] if v is not None]
+
+    avg_first = (
+        sum(first_available) / len(first_available)
+        if first_available
+        else None
+    )
+
+    avg_second = (
+        sum(second_available) / len(second_available)
+        if second_available
+        else None
+    )
+
+    for i in range(3):
+        a = first[i]
+        b = second[i]
+        lo, hi = FIELD_RANGES[i]
+
+        if a is not None and b is not None:
+            # И двете стойности са налични.
+            similarities.append(pair_similarity(a, b, lo, hi))
+
+        elif a is None and b is not None and avg_first is not None:
+            # Липсва стойност на страница 1.
+            # Сравняваме стойността от страница 2
+            # със средното на наличните полета 1–3 на страница 1.
+            similarities.append(
+                pair_similarity(avg_first, b, lo, hi)
+            )
+
+        elif b is None and a is not None and avg_second is not None:
+            # Липсва стойност на страница 2.
+            # Сравняваме стойността от страница 1
+            # със средното на наличните полета 1–3 на страница 2.
+            similarities.append(
+                pair_similarity(a, avg_second, lo, hi)
+            )
+
+        # Ако и двете стойности липсват, полето се пропуска.
+
+    # ---------- ПОЛЕТА 4–6 ----------
+    # Тези полета са задължителни и се сравняват директно.
+    for i in range(3, 6):
+        a = first[i]
+        b = second[i]
+        lo, hi = FIELD_RANGES[i]
+
+        similarities.append(pair_similarity(a, b, lo, hi))
+
+    if not similarities:
+        return 0.0
+
+    return sum(similarities) / len(similarities)
+
+
+# ---------- РОУТЕР ----------
+page = st.session_state.page
+
+if page in (1, 2):
+    render_input_page(page)
+
+else:
+    set_colors("#c8c8c8")
+
+    if not st.session_state.loading_started:
+        loading = st.empty()
+
+        loading.markdown(
+            '<div class="loading-wrap">'
+            '<div class="loading-spinner"></div>'
+            '<div class="loading-text">Изчисляване на сходството...</div>'
+            "</div>",
+            unsafe_allow_html=True,
+        )
+
+        time.sleep(5)
+
+        st.session_state.result = compute_similarity(
+            st.session_state.values_page_1,
+            st.session_state.values_page_2,
+        )
+
+        st.session_state.loading_started = True
+        loading.empty()
+        st.rerun()
+
+    result = st.session_state.result
+    ring_color, message = result_style_and_message(result)
+
+    st.markdown(
+        f'<div class="result-circle" style="--result-color: {ring_color};">'
+        f"{result:.1f}%"
+        "</div>"
+        f'<div class="result-message">{message}</div>',
+        unsafe_allow_html=True,
+    )
+
+    _, mid, _ = st.columns([1, 1.5, 1])
+
+    with mid:
+        st.button(
+            "Ново изчисление",
+            key="restart",
+            use_container_width=True,
+            on_click=restart,
+        )
 
