@@ -186,8 +186,13 @@ def render_input_page(page_number):
                     lo, hi = FIELD_RANGES[i]
 
                     # Променено: над полето пише само „Поле 1“, „Поле 2“ и т.н.
-                    label = f"Поле {i + 1}"
-
+    FIELD_NAMES = {
+        1: ["Име 1", "Име 2", "Име 3", "Име 4", "Име 5", "Име 6"],
+        2: ["Име 1", "Име 2", "Име 3", "Име 4", "Име 5", "Име 6"],
+   
+                   }
+                    label = FIELD_NAMES[page_number][i]
+  
                     st.markdown(f'<div class="field-label">{label}</div>', unsafe_allow_html=True)
                     st.number_input(
                         label,
