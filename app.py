@@ -1,3 +1,4 @@
+python
 import time
 
 import streamlit as st
@@ -183,7 +184,9 @@ def render_input_page(page_number):
             with col:
                 for i in indices:
                     lo, hi = FIELD_RANGES[i]
-                    label = f"Поле {i + 1} ({lo}–{hi})"
+
+                    # Променено: над полето пише само „Поле 1“, „Поле 2“ и т.н.
+                    label = f"Поле {i + 1}"
 
                     st.markdown(f'<div class="field-label">{label}</div>', unsafe_allow_html=True)
                     st.number_input(
@@ -238,13 +241,11 @@ def result_style_and_message(percent):
 
 def pair_similarity(a, b, lo, hi):
     # Разстоянието между двете числа се мери спрямо целия интервал на полето:
-    #   еднакви числа            -> 100%
-    #   двете противоположни     -> 0%  (напр. 2 и 6 при 2–6, или 1 и 10 при 1–10)
+    # еднакви числа = 100%; противоположни крайни стойности = 0%.
     return (1 - abs(a - b) / (hi - lo)) * 100
 
 
 def compute_similarity(first, second):
-    # Сравняваме поле с поле (1-во с 1-во, 2-ро с 2-ро ...) и взимаме средното.
     pairs = [
         pair_similarity(a, b, lo, hi)
         for a, b, (lo, hi) in zip(first, second, FIELD_RANGES)
@@ -291,3 +292,4 @@ else:
     _, mid, _ = st.columns([1, 1.5, 1])
     with mid:
         st.button("Ново изчисление", key="restart", use_container_width=True, on_click=restart)
+
